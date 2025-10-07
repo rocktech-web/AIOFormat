@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RockTech Document Processor</title>
+    <script src="https://unpkg.com/pizzip@3.1.0/dist/pizzip.js"></script>
+    <script src="https://unpkg.com/docxtemplater@3.28.0/build/docxtemplater.js"></script>
+    <style>
+        :root {
+            --bg-light: #FFE5CF; /* Light peach - main backgrounds */
+            --bg-card: #ffffff; /* White for cards, with peach tint */
+            --text-dark: #33372C; /* Dark earthy - primary text */
+            --accent-rose: #FF885B; /* Warm orange - accents, buttons */
+            --border-coffee: #557C56; /* Muted green - borders, labels */
+            --gradient: linear-gradient(135deg, #FFE5CF 0%, #FF885B 100%); /* Warm peach-orange gradient */
+        }
+        body {
+            background: var(--gradient);
+            color: var(--text-dark);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            display: flex;
+            gap: 20px;
+        }
+        .form-container {
+            flex: 1;
+            min-width: 0; /* Allows shrinking if needed */
+        }
+        /* Sidebar Panel for Placeholders */
+        .sidebar {
+            flex: 0 0 300px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-coffee);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 20px rgba(255, 136, 91, 0.1);
+            height: fit-content;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .sidebar h3 {
+            margin: 0 0 15px;
+            color: var(--accent-rose);
+            font-size: 18px;
+            text-align: center;
+            border-bottom: 1px solid var(--border-coffee);
+            padding-bottom: 10px;
+        }
+        .placeholder-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .placeholder-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(85, 124, 86, 0.2);
+            font-size: 14px;
+        }
+        .placeholder-list code {
+            background: var(--accent-rose);
+            color: var(--text-dark);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            margin-right: 8px;
+        }
+        /* Login Page - Earthy warm theme */
+        .login-section {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+            background: var(--gradient);
+        }
+        .login-form {
+            background: var(--bg-card);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(255, 136, 91, 0.2);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+            border: 1px solid var(--border-coffee);
+        }
+        .login-form h2 {
+            margin: 0 0 10px;
+            color: var(--accent-rose);
+            font-size: 28px;
+        }
+        .login-form p {
+            margin-bottom: 30px;
+            color: var(--text-dark);
+            font-size: 16px;
+            line-height: 1.4;
+        }
+        .login-form input {
+            width: 100%;
+            padding: 15px;
+            margin: 15px 0;
+            border: 1px solid var(--accent-rose);
+            border-radius: 10px;
+            box-sizing: border-box;
+            font-size: 16px;
+            background: #fffaf0;
+            color: var(--text-dark);
+        }
+        .login-form button {
+            background: linear-gradient(90deg, var(--accent-rose), #FFE5CF);
+            color: var(--text-dark);
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+            margin: 10px 0;
+            font-size: 16px;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+        .login-form button:hover {
+            transform: translateY(-2px);
+        }
+        .login-footer {
+            margin-top: 30px;
+            color: var(--border-coffee);
+            font-size: 12px;
+            text-align: center;
+        }
+        /* Main Page - Earthy theme */
+        .main-app {
+            display: none;
+            background: var(--gradient);
+        }
+        .main-app.show {
+            display: block;
+        }
+        .title-bar {
+            background: linear-gradient(90deg, var(--accent-rose), #FFE5CF);
+            width: 100%;
+            padding: 15px 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(255, 136, 91, 0.3);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            margin-bottom: 20px;
+        }
+        .title-bar h1 {
+            margin: 0;
+            color: var(--text-dark);
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .header-subtitle {
+            color: var(--text-dark);
+            margin: 5px 0 0;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 25px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-coffee);
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(255, 136, 91, 0.1);
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: var(--border-coffee);
+            font-size: 14px;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--accent-rose);
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 14px;
+            background: #fffaf0;
+            color: var(--text-dark);
+        }
+        textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        input[readonly] {
+            background: #f5f0e6;
+            color: var(--text-dark);
+        }
+        button {
+            background: linear-gradient(90deg, var(--accent-rose), #FFE5CF);
+            color: var(--text-dark);
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+        }
+        #themeToggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #557C56;
+            color: var(--bg-card);
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            z-index: 1000;
+            font-size: 14px;
+        }
+        #downloadBtn {
+            grid-column: 1 / -1;
+            justify-self: center;
+            margin-top: 15px;
+            width: auto;
+            padding: 15px 40px;
+            font-size: 18px;
+        }
+        .logout {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: #557C56;
+            color: var(--bg-card);
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            z-index: 1000;
+            font-size: 14px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: var(--border-coffee);
+            font-size: 12px;
+            border-top: 1px solid var(--border-coffee);
+        }
+        /* Responsive: Hide sidebar on small screens */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            .sidebar {
+                order: -1; /* Show above forms on mobile */
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Page -->
+    <div class="login-section" id="loginSection">
+        <div class="login-form">
+            <h2>Welcome!</h2>
+            <p>Smart forms to flawless documents — fast, secure, and consistent.</p>
+            <input type="text" id="username">
+            <input type="password" id="password">
+            <button onclick="login()">Login</button>
+        </div>
+        <div class="login-footer">
+            Support 9876543210<br>
+            © 2025 Rock Technology All rights reserved. Version 1.0
+        </div>
+    </div>
+
+    <!-- Main Page -->
+    <div class="main-app" id="mainApp">
+        <button class="logout" onclick="logout()" id="logoutBtn" style="display:none;">Logout</button>
+        <button id="themeToggle">Switch Theme</button>
+        <div class="title-bar">
+            <h1>RockTech — Document Processing Suite</h1>
+            <p class="header-subtitle">Smart forms to flawless documents — fast, secure, and consistent.</p>
+        </div>
+        <div class="container">
+            <div class="form-container">
+                <div class="row" id="row1">
+                    <div>
+                        <label for="docid">Document No (if available)</label>
+                        <input type="text" id="docid">
+                    </div>
+                    <div>
+                        <label for="docdt">Document Dt. (if available)</label>
+                        <input type="date" id="docdt">
+                    </div>
+                    <div>
+                        <label for="court">Court</label>
+                        <select id="court">
+                            <option value="">Select Court</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row" id="row2">
+                    <div>
+                        <label for="apptype">Applicant Type</label>
+                        <select id="apptype">
+                            <option value="">Select Type</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="appshort">Applicant Name (in short)</label>
+                        <input type="text" id="appshort">
+                    </div>
+                    <div>
+                        <label for="appfull">Applicant Name (full)</label>
+                        <textarea id="appfull"></textarea>
+                    </div>
+                    <div>
+                        <label for="appjoin">Applicant Join (full)</label>
+                        <input type="text" id="appjoin" readonly>
+                    </div>
+                </div>
+                <div class="row" id="row3">
+                    <div>
+                        <label for="depotype">Deponent Type</label>
+                        <select id="depotype">
+                            <option value="">Select Type</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="deposhort">Deponent Name (in short)</label>
+                        <input type="text" id="deposhort">
+                    </div>
+                    <div>
+                        <label for="depofull">Deponent Name (full)</label>
+                        <textarea id="depofull"></textarea>
+                    </div>
+                    <div>
+                        <label for="depojoin">Deponent Join (full)</label>
+                        <input type="text" id="depojoin" readonly>
+                    </div>
+                </div>
+                <div class="row" id="row4">
+                    <div>
+                        <label for="vill">Village</label>
+                        <select id="vill">
+                            <option value="">Select Village</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="khasara">Khasara & Rakava Details</label>
+                        <textarea id="khasara"></textarea>
+                    </div>
+                    <div>
+                        <label for="lowner">Land Owner Details</label>
+                        <textarea id="lowner"></textarea>
+                    </div>
+                </div>
+                <div class="row" id="row5">
+                    <div>
+                        <label for="dodate">Deceased Date (if available)</label>
+                        <input type="date" id="dodate">
+                    </div>
+                    <div>
+                        <label for="dlowner">Deceased Owner (if available)</label>
+                        <textarea id="dlowner"></textarea>
+                    </div>
+                    <div>
+                        <label for="boundary">Boundary (if available)</label>
+                        <textarea id="boundary"></textarea>
+                    </div>
+                    <div>
+                        <label for="boundaryjoin">Boundary Join</label>
+                        <input type="text" id="boundaryjoin" readonly>
+                    </div>
+                </div>
+                <div class="row" id="row6">
+                    <div>
+                        <label for="template">Template Name (.docx from GitHub)</label>
+                        <select id="template">
+                            <option value="">Loading templates...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="outputname">Output file name (without extension)</label>
+                        <input type="text" id="outputname">
+                    </div>
+                    <button type="button" id="downloadBtn">Download .docx</button>
+                </div>
+            </div>
+            <!-- Right-Side Placeholder Panel -->
+            <div class="sidebar">
+                <h3>Placeholder Reference</h3>
+                <ul class="placeholder-list">
+                    <li><code>{DOCID}</code> Document No (if available)</li>
+                    <li><code>{DOCDT}</code> Document Dt. (dd.mm.yyyy)</li>
+                    <li><code>{COURT}</code> Court</li>
+                    <li><code>{APPTYPE}</code> Applicant Type</li>
+                    <li><code>{APPSHORT}</code> Applicant Name (short)</li>
+                    <li><code>{APPFULL}</code> Applicant Name (full)</li>
+                    <li><code>{APPJOIN}</code> Applicant Join</li>
+                    <li><code>{DEPOTYPE}</code> Deponent Type</li>
+                    <li><code>{DEPOSHORT}</code> Deponent Name (short)</li>
+                    <li><code>{DEPOFULL}</code> Deponent Name (full)</li>
+                    <li><code>{DEPOJOIN}</code> Deponent Join</li>
+                    <li><code>{VILL}</code> Village</li>
+                    <li><code>{KHASARA}</code> Khasara & Rakava Details</li>
+                    <li><code>{L_OWNER}</code> Land Owner Details</li>
+                    <li><code>{DO_DATE}</code> Deceased Date (dd.mm.yyyy)</li>
+                    <li><code>{DL_OWNER}</code> Deceased Owner (if available)</li>
+                    <li><code>{BOUNDARY}</code> Boundary (if available)</li>
+                    <li><code>{BOUNDARYJOIN}</code> Boundary Join</li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer">
+            Support 9876543210<br>
+            © 2025 Rock Technology All rights reserved. Version 1.0
+        </div>
+    </div>
+
+    <script>
+        // Login functions
+        function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            if (username === 'RockTechnology' && password === 'Manish@31689') {
+                showMainApp();
+            } else {
+                // Silent fail
+                return;
+            }
+        }
+
+        function showMainApp() {
+            document.getElementById('loginSection').style.display = 'none';
+            document.getElementById('mainApp').classList.add('show');
+            document.getElementById('logoutBtn').style.display = 'block';
+        }
+
+        function logout() {
+            document.getElementById('mainApp').classList.remove('show');
+            document.getElementById('loginSection').style.display = 'flex';
+            document.getElementById('logoutBtn').style.display = 'none';
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            location.reload();
+        }
+
+        // Add Enter key support for login
+        document.addEventListener('DOMContentLoaded', () => {
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+
+            // Listen for Enter on username or password fields
+            [usernameInput, passwordInput].forEach(input => {
+                input.addEventListener('keydown', (event) => {
+                    if (event.key === 'Enter') {
+                        login(); // Trigger login function
+                    }
+                });
+            });
+
+            // Rest of the app init
+            const courtOptions = ["तहसील-सिंगरौली नगर", "वृत्‍त-पंजरेह, तहसील-सिंगरौली नगर", "वृत्‍त-कचनी, तहसील-सिंगरौली नगर"];
+            const apptypeOptions = ["आवेदक", "आवेदिका", "आवेदकगण", "आवेदिकागण"];
+            const depotypeOptions = ["अनावेदक", "अनावेदिका", "अनावेदकगण", "अनावेदिकागण"];
+            const villageOptions = ["गनियारी", "बैढ़न", "देवरा"];
+
+            function populateDropdown(id, options) {
+                const select = document.getElementById(id);
+                options.forEach(opt => {
+                    const option = document.createElement('option');
+                    option.value = opt;
+                    option.textContent = opt;
+                    select.appendChild(option);
+                });
+            }
+
+            function updateJoinField(fullId, joinId) {
+                const fullTextarea = document.getElementById(fullId);
+                const joinInput = document.getElementById(joinId);
+                const update = () => {
+                    const lines = fullTextarea.value.split('\n').map(l => l.trim()).filter(l => l);
+                    joinInput.value = lines.join(', ');
+                };
+                fullTextarea.addEventListener('input', update);
+                update();
+            }
+
+            // Format date to dd.mm.yyyy
+            function formatDateToDDMMYYYY(dateString) {
+                if (!dateString) return '';
+                const [year, month, day] = dateString.split('-');
+                return `${day.padStart(2, '0')}.${month.padStart(2, '0')}.${year}`;
+            }
+
+            async function loadTemplates() {
+                try {
+                    const res = await fetch('https://api.github.com/repos/rocktech-web/AIOFormat/contents/');
+                    const data = await res.json();
+                    const docxFiles = data.filter(item => item.name.endsWith('.docx')).map(item => item.name);
+                    const select = document.getElementById('template');
+                    select.innerHTML = '<option value="">Select Template</option>';
+                    docxFiles.forEach(name => {
+                        const opt = document.createElement('option');
+                        opt.value = name;
+                        opt.textContent = name;
+                        select.appendChild(opt);
+                    });
+                } catch (e) {
+                    console.error('Error loading templates:', e);
+                    document.getElementById('template').innerHTML = '<option value="">Error loading templates</option>';
+                }
+            }
+
+            async function generateAndDownload() {
+                const appfullValue = document.getElementById('appfull').value;
+                const depofullValue = document.getElementById('depofull').value;
+                const boundaryValue = document.getElementById('boundary').value;
+                const docdtValue = document.getElementById('docdt').value;
+                const dodateValue = document.getElementById('dodate').value;
+
+                const context = {
+                    DOCID: document.getElementById('docid').value || '',
+                    DOCDT: formatDateToDDMMYYYY(docdtValue) || '',
+                    COURT: document.getElementById('court').value || '',
+                    APPTYPE: document.getElementById('apptype').value || '',
+                    APPSHORT: document.getElementById('appshort').value || '',
+                    APPFULL: appfullValue || '',
+                    APPJOIN: appfullValue.split('\n').map(l => l.trim()).filter(l => l).join(', '),
+                    DEPOTYPE: document.getElementById('depotype').value || '',
+                    DEPOSHORT: document.getElementById('deposhort').value || '',
+                    DEPOFULL: depofullValue || '',
+                    DEPOJOIN: depofullValue.split('\n').map(l => l.trim()).filter(l => l).join(', '),
+                    VILL: document.getElementById('vill').value || '',
+                    KHASARA: document.getElementById('khasara').value || '',
+                    L_OWNER: document.getElementById('lowner').value || '',
+                    DO_DATE: formatDateToDDMMYYYY(dodateValue) || '',
+                    DL_OWNER: document.getElementById('dlowner').value || '',
+                    BOUNDARY: boundaryValue || '',
+                    BOUNDARYJOIN: boundaryValue.split('\n').map(l => l.trim()).filter(l => l).join(', ')
+                };
+
+                const templateName = document.getElementById('template').value;
+                if (!templateName) {
+                    return; // Silent
+                }
+
+                const outputName = document.getElementById('outputname').value || 'output';
+                const rawUrl = `https://raw.githubusercontent.com/rocktech-web/AIOFormat/main/${templateName}`;
+
+                try {
+                    const response = await fetch(rawUrl);
+                    const buffer = await response.arrayBuffer();
+                    const zip = new PizZip(buffer);
+                    const doc = new docxtemplater(zip, {
+                        paragraphLoop: true,
+                        linebreaks: true
+                    });
+
+                    doc.setData(context);
+                    doc.render();
+
+                    const blob = doc.getZip().generate({
+                        type: 'blob',
+                        mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                    });
+
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `${outputName}.docx`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                } catch (e) {
+                    console.error('Error:', e);
+                }
+            }
+
+            populateDropdown('court', courtOptions);
+            populateDropdown('apptype', apptypeOptions);
+            populateDropdown('depotype', depotypeOptions);
+            populateDropdown('vill', villageOptions);
+            loadTemplates();
+
+            updateJoinField('appfull', 'appjoin');
+            updateJoinField('depofull', 'depojoin');
+            updateJoinField('boundary', 'boundaryjoin');
+
+            document.getElementById('downloadBtn').addEventListener('click', generateAndDownload);
+
+            document.getElementById('themeToggle').addEventListener('click', () => {
+                // Simple brightness toggle for subtle variation in theme
+                document.body.style.filter = document.body.style.filter === 'brightness(1.1)' ? 'none' : 'brightness(1.1)';
+            });
+        });
+    </script>
+</body>
+</html>
