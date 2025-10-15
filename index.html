@@ -173,6 +173,18 @@
   	}
 	#voiceToggle.active { outline: 2px solid #FF885B; }
 
+.icon-btn{
+  width:38px; height:38px; border-radius:50%;
+  border:1px solid var(--accent-rose);
+  background:#fffaf0; color:var(--text-dark);
+  display:inline-flex; align-items:center; justify-content:center;
+  cursor:pointer; font-size:18px; line-height:1;
+}
+.icon-btn:disabled{ opacity:.6; cursor:not-allowed; }
+.icon-btn.spin{ animation: spin .8s linear infinite; }
+@keyframes spin{ from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+
+
         .header-subtitle {
             color: var(--text-dark);
             margin: 5px 0 0;
@@ -295,7 +307,7 @@
         </div>
         <div class="login-footer">
             Support: 7869731689<br>
-            © 2025 Rock Technology - All rights reserved. Version 1.0.2
+            © 2025 Rock Technology - All rights reserved. Version 1.0.3
         </div>
     </div>
 
@@ -315,8 +327,9 @@
 	    <option value="en-US">English (en-US)</option>
 	  </select>
 	  <button id="voiceToggle" type="button">Start Voice</button>
+			  <button id="refreshTplBtn" type="button" class="icon-btn" title="Reload .docx list">🔄</button>
+			  <button id="resetFieldsBtn" type="button" class="icon-btn" title="Reset all fields">🧹</button>
 	</div>
-
 
         </div>
 
@@ -475,7 +488,7 @@
         </div>
         <div class="footer">
             Support 7869731689<br>
-            © 2025 Rock Technology All rights reserved. Version 1.0.2
+            © 2025 Rock Technology All rights reserved. Version 1.0.3
         </div>
     </div>
 
@@ -627,6 +640,7 @@
 })();
 
 
+
             // Rest of the app init
             const courtOptions = ["तहसील-सिंगरौली नगर", "वृत्‍त-पंजरेह, तहसील-सिंगरौली नगर", "वृत्‍त-कचनी, तहसील-सिंगरौली नगर"];
             const apptypeOptions = ["आवेदक", "आवेदिका", "आवेदकगण", "आवेदिकागण"];
@@ -661,24 +675,69 @@
                 return `${day.padStart(2, '0')}.${month.padStart(2, '0')}.${year}`;
             }
 
-            async function loadTemplates() {
-                try {
-                    const res = await fetch('https://api.github.com/repos/rocktech-web/AIOFormat/contents/');
-                    const data = await res.json();
-                    const docxFiles = data.filter(item => item.name.endsWith('.docx')).map(item => item.name);
-                    const select = document.getElementById('template');
-                    select.innerHTML = '<option value="">Select Template</option>';
-                    docxFiles.forEach(name => {
-                        const opt = document.createElement('option');
-                        opt.value = name;
-                        opt.textContent = name;
-                        select.appendChild(opt);
-                    });
-                } catch (e) {
-                    console.error('Error loading templates:', e);
-                    document.getElementById('template').innerHTML = '<option value="">Error loading templates</option>';
-                }
-            }
+// Replace your existing loadTemplates with this more robust version
+async function loadTemplates(force = false) {
+  const baseUrl = 'https://api.github.com/repos/rocktech-web/AIOFormat/contents/';
+  const url = force ? `${baseUrl}?_ts=${Date.now()}` : baseUrl;
+
+  const select = document.getElementById('template');
+  if (!select) return;
+
+  const prev = select.value;
+  select.innerHTML = '<option value="">Loading templates...</option>';
+
+  const res = await fetch(url, {
+    method: 'GET',
+    headers: { 'Accept': 'application/vnd.github+json' },
+    cache: 'no-store' // bypass browser caches
+  });
+
+  if (!res.ok) {
+    const remain = res.headers.get('x-ratelimit-remaining');
+    const limitMsg = (res.status === 403 && remain === '0')
+      ? 'Rate limit exceeded. Try later or authenticate.'
+      : `Error ${res.status}.`;
+    select.innerHTML = `<option value="">${limitMsg}</option>`;
+    return;
+  }
+
+  const data = await res.json();
+  const docx = (Array.isArray(data) ? data : [])
+    .filter(item => item && item.type === 'file' && item.name && item.name.endsWith('.docx'))
+    .map(item => item.name)
+    .sort((a,b) => a.localeCompare(b));
+
+  select.innerHTML = '<option value="">Select Template</option>';
+  docx.forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = name;
+    select.appendChild(opt);
+  });
+
+  // Try to keep previous selection if still present
+  if (prev && docx.includes(prev)) select.value = prev;
+}
+
+// Wire the refresh button (keep this inside DOMContentLoaded)
+const refreshBtn = document.getElementById('refreshTplBtn');
+if (refreshBtn) {
+  refreshBtn.addEventListener('click', async () => {
+    const btn = refreshBtn;
+    btn.disabled = true;
+    btn.classList.add('spin');
+    try {
+      await loadTemplates(true); // force no-cache refresh
+    } catch (e) {
+      console.error(e);
+      const select = document.getElementById('template');
+      if (select) select.innerHTML = '<option value="">Reload failed</option>';
+    } finally {
+      btn.classList.remove('spin');
+      btn.disabled = false;
+    }
+  });
+}
 
             async function generateAndDownload() {
                 const appfullValue = document.getElementById('appfull').value;
@@ -773,6 +832,51 @@
                 document.body.style.filter = document.body.style.filter === 'brightness(1.1)' ? 'none' : 'brightness(1.1)';
             });
         });
+
+
+// 🧹 Reset all fields to defaults
+function resetAllFields(){
+  const defaults = {
+    appaddr: 'निवासी-, जिला-सिंगरौली (म.प्र.)',
+    depoaddr: 'निवासी-, जिला-सिंगरौली (म.प्र.)'
+  };
+
+  // साफ़ करें: inputs, textareas, selects (readOnly भी खाली)
+  const scope = document.querySelector('#mainApp .form-container');
+  if (!scope) return;
+  const nodes = scope.querySelectorAll('input, textarea, select');
+
+  nodes.forEach(el => {
+    if (el.tagName === 'SELECT'){
+      el.selectedIndex = 0; // first option (e.g., "Select ...")
+      return;
+    }
+    if (el.tagName === 'TEXTAREA'){
+      if (el.id === 'appaddr') { el.value = defaults.appaddr; return; }
+      if (el.id === 'depoaddr') { el.value = defaults.depoaddr; return; }
+      el.value = '';
+      return;
+    }
+    if (el.type === 'date'){ el.value = ''; return; }
+    if (el.type === 'text'){ el.value = ''; return; }
+  });
+
+  // join-fields तुरंत अपडेट हों
+  ['appfull','depofull','boundary','lheirs'].forEach(id=>{
+    const el = document.getElementById(id);
+    if (el) el.dispatchEvent(new Event('input', { bubbles:true }));
+  });
+
+  // फोकस पहले फील्ड पर
+  const first = document.getElementById('docid');
+  if (first) first.focus();
+}
+
+const resetBtn = document.getElementById('resetFieldsBtn');
+if (resetBtn){
+  resetBtn.addEventListener('click', resetAllFields);
+}
+
     </script>
 </body>
 </html>
