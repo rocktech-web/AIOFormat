@@ -1,888 +1,816 @@
 <!DOCTYPE html>
 <html lang="hi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RockTech Document Processor</title>
-    <script src="https://unpkg.com/pizzip@3.1.0/dist/pizzip.js"></script>
-    <script src="https://unpkg.com/docxtemplater@3.28.0/build/docxtemplater.js"></script>
-    <style>
-        :root {
-            --bg-light: #FFE5CF; /* Light peach - main backgrounds */
-            --bg-card: #ffffff; /* White for cards, with peach tint */
-            --text-dark: #33372C; /* Dark earthy - primary text */
-            --accent-rose: #FF885B; /* Warm orange - accents, buttons */
-            --border-coffee: #557C56; /* Muted green - borders, labels */
-            --gradient: linear-gradient(135deg, #FFE5CF 0%, #FF885B 100%); /* Warm peach-orange gradient */
-        }
-        body {
-            background: var(--gradient);
-            color: var(--text-dark);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            display: flex;
-            gap: 20px;
-        }
-        .form-container {
-            flex: 1;
-            min-width: 0; /* Allows shrinking if needed */
-        }
-        /* Sidebar Panel for Placeholders */
-        .sidebar {
-            flex: 0 0 300px;
-            background: var(--bg-card);
-            border: 1px solid var(--border-coffee);
-            border-radius: 15px;
-            padding: 20px;
-            box-shadow: 0 5px 20px rgba(255, 136, 91, 0.1);
-            height: fit-content;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-        .sidebar h3 {
-            margin: 0 0 15px;
-            color: var(--accent-rose);
-            font-size: 18px;
-            text-align: center;
-            border-bottom: 1px solid var(--border-coffee);
-            padding-bottom: 10px;
-        }
-        .placeholder-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-        .placeholder-list li {
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(85, 124, 86, 0.2);
-            font-size: 14px;
-        }
-        .placeholder-list code {
-            background: var(--accent-rose);
-            color: var(--text-dark);
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-family: monospace;
-            margin-right: 8px;
-        }
-        /* Login Page - Earthy warm theme */
-        .login-section {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            flex-direction: column;
-            background: var(--gradient);
-        }
-        .login-form {
-            background: var(--bg-card);
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(255, 136, 91, 0.2);
-            text-align: center;
-            max-width: 400px;
-            width: 100%;
-            border: 1px solid var(--border-coffee);
-        }
-        .login-form h2 {
-            margin: 0 0 10px;
-            color: var(--accent-rose);
-            font-size: 28px;
-        }
-        .login-form p {
-            margin-bottom: 30px;
-            color: var(--text-dark);
-            font-size: 16px;
-            line-height: 1.4;
-        }
-        .login-form input {
-            width: 100%;
-            padding: 15px;
-            margin: 15px 0;
-            border: 1px solid var(--accent-rose);
-            border-radius: 10px;
-            box-sizing: border-box;
-            font-size: 16px;
-            background: #fffaf0;
-            color: var(--text-dark);
-        }
-        .login-form button {
-            background: linear-gradient(90deg, var(--accent-rose), #FFE5CF);
-            color: var(--text-dark);
-            padding: 15px 30px;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            width: 100%;
-            margin: 10px 0;
-            font-size: 16px;
-            font-weight: bold;
-            transition: transform 0.2s;
-        }
-        .login-form button:hover {
-            transform: translateY(-2px);
-        }
-        .login-footer {
-            margin-top: 30px;
-            color: var(--border-coffee);
-            font-size: 12px;
-            text-align: center;
-        }
-        /* Main Page - Earthy theme */
-        .main-app {
-            display: none;
-            background: var(--gradient);
-        }
-        .main-app.show {
-            display: block;
-        }
-        .title-bar {
-            background: linear-gradient(90deg, var(--accent-rose), #FFE5CF);
-            width: 100%;
-            padding: 15px 20px;
-            text-align: center;
-            box-shadow: 0 2px 10px rgba(255, 136, 91, 0.3);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            margin-bottom: 20px;
-        }
-        .title-bar h1 {
-            margin: 0;
-            color: var(--text-dark);
-            font-size: 24px;
-            font-weight: bold;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RockTech Document Processor</title>
 
-.mic-btn{
-  width:38px; height:38px; border-radius:50%;
-  border:1px solid var(--accent-rose);
-  background:#fffaf0; color:var(--text-dark);
-  display:inline-flex; align-items:center; justify-content:center;
-  position:relative; cursor:pointer;
-}
-.mic-btn:disabled{ opacity:.6; cursor:not-allowed; }
-.mic-ico{ font-size:18px; line-height:1; }
-.mic-dot{
-  position:absolute; right:4px; bottom:4px;
-  width:8px; height:8px; border-radius:50%;
-  background:#d62b2b; display:none;
-}
-.mic-btn.listening { outline:2px solid #FF885B; animation:pulse 1s ease-in-out infinite; }
-.mic-btn.listening .mic-dot{ display:block; }
-@keyframes pulse{ 0%{box-shadow:0 0 0 0 rgba(255,136,91,.5)}
-  70%{box-shadow:0 0 0 6px rgba(255,136,91,0)} 100%{box-shadow:0 0 0 0 rgba(255,136,91,0)} }
-.mic-btn.na { filter:grayscale(1); }
+  <!-- Libraries -->
+  <script src="https://unpkg.com/pizzip@3.1.0/dist/pizzip.js"></script>
+  <script src="https://unpkg.com/docxtemplater@3.28.0/build/docxtemplater.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 
+  <style>
+    :root {
+      --bg-light: #FFE5CF;
+      --bg-card: #ffffff;
+      --text-dark: #33372C;
+      --accent-rose: #FF885B;
+      --border-coffee: #557C56;
+      --gradient: linear-gradient(135deg, #FFE5CF 0%, #FF885B 100%);
 
+      /* Responsive layout variables */
+      --preview-w: clamp(320px, 28vw, 560px);
+      --content-max: min(1800px, 96vw);
+      --gap: 20px;
+    }
+    body {
+      background: var(--gradient);
+      color: var(--text-dark);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+    }
+    .container {
+      width: 100%;
+      max-width: var(--content-max);
+      margin: 0 auto;
+      padding: 20px;
+      display: grid;
+      grid-template-columns: 1fr var(--preview-w);
+      gap: var(--gap);
+      align-items: start;
+    }
+    .form-container {
+      min-width: 0;
+    }
+    .title-bar {
+      background: linear-gradient(90deg, var(--accent-rose), #FFE5CF);
+      width: 100%;
+      padding: 15px 20px;
+      text-align: center;
+      box-shadow: 0 2px 10px rgba(255, 136, 91, 0.3);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      margin-bottom: 20px;
+    }
+    .title-bar h1 {
+      margin: 0;
+      color: var(--text-dark);
+      font-size: 24px;
+      font-weight: bold;
+    }
+    .header-subtitle {
+      color: var(--text-dark);
+      margin: 5px 0 0;
+      font-size: 14px;
+      opacity: 0.9;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+      padding: 25px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-coffee);
+      border-radius: 15px;
+      box-shadow: 0 5px 20px rgba(255, 136, 91, 0.1);
+    }
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 8px;
+      color: var(--border-coffee);
+      font-size: 14px;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--accent-rose);
+      border-radius: 8px;
+      box-sizing: border-box;
+      font-size: 14px;
+      background: #fffaf0;
+      color: var(--text-dark);
+    }
+    textarea { min-height: 80px; resize: vertical; }
+    input[readonly] { background: #f5f0e6; color: var(--text-dark); }
+    button {
+      background: linear-gradient(90deg, var(--accent-rose), #FFE5CF);
+      color: var(--text-dark);
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+      transition: transform 0.2s;
+    }
+    button:hover { transform: translateY(-2px); }
 
-.icon-btn{
-  width:38px; height:38px; border-radius:50%;
-  border:1px solid var(--accent-rose);
-  background:#fffaf0; color:var(--text-dark);
-  display:inline-flex; align-items:center; justify-content:center;
-  cursor:pointer; font-size:18px; line-height:1;
-}
-.icon-btn:disabled{ opacity:.6; cursor:not-allowed; }
-.icon-btn.spin{ animation: spin .8s linear infinite; }
-@keyframes spin{ from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+    /* Login */
+    .login-section {
+      display: flex; justify-content: center; align-items: center;
+      height: 100vh; flex-direction: column; background: var(--gradient);
+    }
+    .login-form {
+      background: var(--bg-card);
+      padding: 40px; border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(255, 136, 91, 0.2);
+      text-align: center; max-width: 400px; width: 100%;
+      border: 1px solid var(--border-coffee);
+    }
+    .login-form h2 { margin: 0 0 10px; color: var(--accent-rose); font-size: 28px; }
+    .login-form p { margin-bottom: 30px; color: var(--text-dark); font-size: 16px; line-height: 1.4; }
+    .login-form input {
+      width: 100%; padding: 15px; margin: 15px 0;
+      border: 1px solid var(--accent-rose); border-radius: 10px;
+      box-sizing: border-box; font-size: 16px; background: #fffaf0; color: var(--text-dark);
+    }
+    .login-form button {
+      background: linear-gradient(90deg, var(--accent-rose), #FFE5CF);
+      color: var(--text-dark); padding: 15px 30px; border: none; border-radius: 10px;
+      cursor: pointer; width: 100%; margin: 10px 0; font-size: 16px; font-weight: bold;
+    }
+    .login-footer { margin-top: 30px; color: var(--border-coffee); font-size: 12px; text-align: center; }
 
+    /* App shell */
+    .main-app { display: none; background: var(--gradient); }
+    .main-app.show { display: block; }
+    #themeToggle {
+      position: fixed; top: 20px; right: 20px;
+      background: #557C56; color: var(--bg-card);
+      padding: 10px 15px; border: none; border-radius: 8px;
+      cursor: pointer; z-index: 1000; font-size: 14px;
+    }
+    .logout {
+      position: fixed; top: 20px; left: 20px;
+      background: #557C56; color: var(--bg-card);
+      padding: 10px 15px; border: none; border-radius: 8px;
+      cursor: pointer; z-index: 1000; font-size: 14px;
+    }
 
-        .header-subtitle {
-            color: var(--text-dark);
-            margin: 5px 0 0;
-            font-size: 14px;
-            opacity: 0.9;
-        }
-        .row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-            padding: 25px;
-            background: var(--bg-card);
-            border: 1px solid var(--border-coffee);
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(255, 136, 91, 0.1);
-        }
-        label {
-            display: block;
-            font-weight: bold;
-            margin-bottom: 8px;
-            color: var(--border-coffee);
-            font-size: 14px;
-        }
-        input, select, textarea {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid var(--accent-rose);
-            border-radius: 8px;
-            box-sizing: border-box;
-            font-size: 14px;
-            background: #fffaf0;
-            color: var(--text-dark);
-        }
-        textarea {
-            min-height: 80px;
-            resize: vertical;
-        }
-        input[readonly] {
-            background: #f5f0e6;
-            color: var(--text-dark);
-        }
-        button {
-            background: linear-gradient(90deg, var(--accent-rose), #FFE5CF);
-            color: var(--text-dark);
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-            transition: transform 0.2s;
-        }
-        button:hover {
-            transform: translateY(-2px);
-        }
-        #themeToggle {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #557C56;
-            color: var(--bg-card);
-            padding: 10px 15px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            z-index: 1000;
-            font-size: 14px;
-        }
-        #downloadBtn {
-            grid-column: 1 / -1;
-            justify-self: center;
-            margin-top: 15px;
-            width: auto;
-            padding: 15px 40px;
-            font-size: 18px;
-        }
-        .logout {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            background: #557C56;
-            color: var(--bg-card);
-            padding: 10px 15px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            z-index: 1000;
-            font-size: 14px;
-        }
-        .footer {
-            text-align: center;
-            margin-top: 40px;
-            padding: 20px;
-            color: var(--border-coffee);
-            font-size: 12px;
-            border-top: 1px solid var(--border-coffee);
-        }
-        /* Responsive: Hide sidebar on small screens */
-        @media (max-width: 768px) {
-            .container {
-                flex-direction: column;
-            }
-            .sidebar {
-                order: -1; /* Show above forms on mobile */
-                margin-bottom: 20px;
-            }
-        }
-    </style>
+    /* Placeholder list reused */
+    .placeholder-list { list-style: none; padding: 0; margin: 0; }
+    .placeholder-list li {
+      padding: 8px 0; border-bottom: 1px solid rgba(85,124,86,0.2); font-size: 14px;
+    }
+    .placeholder-list code {
+      background: var(--accent-rose); color: var(--text-dark);
+      padding: 2px 6px; border-radius: 4px; font-family: monospace; margin-right: 8px;
+    }
+
+    /* Icon buttons (reload/reset) */
+    .icon-btn{
+      width:38px; height:38px; border-radius:50%;
+      border:1px solid var(--accent-rose);
+      background:#fffaf0; color:var(--text-dark);
+      display:inline-flex; align-items:center; justify-content:center;
+      cursor:pointer; font-size:18px; line-height:1;
+    }
+    .icon-btn:disabled{ opacity:.6; cursor:not-allowed; }
+    .icon-btn.spin{ animation: spin .8s linear infinite; }
+    @keyframes spin{ from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+
+    /* Voice mic icon */
+    #voiceControls{
+      position:fixed; top:20px; right:160px; display:flex; gap:8px; z-index:1000;
+      align-items:center;
+    }
+    .mic-btn{
+      width:38px; height:38px; border-radius:50%;
+      border:1px solid var(--accent-rose);
+      background:#fffaf0; color:var(--text-dark);
+      display:inline-flex; align-items:center; justify-content:center;
+      position:relative; cursor:pointer;
+    }
+    .mic-btn:disabled{ opacity:.6; cursor:not-allowed; }
+    .mic-ico{ font-size:18px; line-height:1; }
+    .mic-dot{
+      position:absolute; right:4px; bottom:4px;
+      width:8px; height:8px; border-radius:50%; background:#d62b2b; display:none;
+    }
+    .mic-btn.listening { outline:2px solid #FF885B; animation:pulse 1s ease-in-out infinite; }
+    .mic-btn.listening .mic-dot{ display:block; }
+    .mic-btn.na { filter:grayscale(1); }
+    @keyframes pulse{
+      0%{box-shadow:0 0 0 0 rgba(255,136,91,.5)}
+      70%{box-shadow:0 0 0 6px rgba(255,136,91,0)}
+      100%{box-shadow:0 0 0 0 rgba(255,136,91,0)}
+    }
+
+    /* Live Preview panel (now grid child) */
+    .preview-panel{
+      width: 100%;
+      background: var(--bg-card); border: 1px solid var(--border-coffee);
+      border-radius: 15px; padding: 16px;
+      box-shadow: 0 5px 20px rgba(255, 136, 91, 0.1);
+      max-height: calc(100vh - 160px); overflow: hidden;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .preview-panel h3{
+      margin: 0 0 6px; color: var(--accent-rose); font-size: 18px;
+      text-align: center; border-bottom: 1px solid var(--border-coffee); padding-bottom: 8px;
+    }
+    .preview-status{ font-size: 12px; color: var(--border-coffee); }
+    .preview-content{
+      overflow: auto; padding: 10px; border: 1px dashed var(--border-coffee);
+      border-radius: 8px; background: #fffaf0; flex: 1;
+    }
+
+    /* Responsive: single column under 1024px */
+    @media (max-width: 1024px){
+      .container { grid-template-columns: 1fr; }
+      #voiceControls { right: 20px; }
+    }
+  </style>
 </head>
 <body>
-    <!-- Login Page -->
-    <div class="login-section" id="loginSection">
-        <div class="login-form">
-            <h2>Welcome!</h2>
-            <p>Smart forms to flawless documents — fast, secure, and consistent.</p>
-            <input type="text" id="username">
-            <input type="password" id="password">
-            <button onclick="login()">Login</button>
-        </div>
-        <div class="login-footer">
-            Support: 7869731689<br>
-            © 2025 Rock Technology - All rights reserved. Version 1.0.3
-        </div>
+  <!-- Login Page -->
+  <div class="login-section" id="loginSection">
+    <form id="loginForm" class="login-form">
+      <h2>Welcome!</h2>
+      <p>Smart forms to flawless documents — fast, secure, and consistent.</p>
+      <input type="text" id="username" placeholder="Username" autocomplete="username">
+      <input type="password" id="password" placeholder="Password" autocomplete="current-password">
+      <button type="submit">Login</button>
+    </form>
+    <div class="login-footer">
+      Support: 7869731689<br>
+      © 2025 Rock Technology - All rights reserved. Version 1.0
+    </div>
+  </div>
+
+  <!-- Main Page -->
+  <div class="main-app" id="mainApp">
+    <button class="logout" onclick="logout()" id="logoutBtn" style="display:none;">Logout</button>
+    <button id="themeToggle">Switch Theme</button>
+
+    <!-- Voice controls -->
+    <div id="voiceControls">
+      <select id="voiceLang" aria-label="Voice language">
+        <option value="hi-IN">Hindi (hi-IN)</option>
+        <option value="en-IN">English (en-IN)</option>
+        <option value="en-US">English (en-US)</option>
+      </select>
+      <button id="voiceToggle" type="button" class="mic-btn" aria-pressed="false"
+              title="Start voice typing" aria-label="Start voice typing">
+        <span class="mic-ico" aria-hidden="true">🎤</span>
+        <span class="mic-dot" aria-hidden="true"></span>
+      </button>
+              <button id="refreshTplBtn" type="button" class="icon-btn" title="Reload .docx list">🔄</button>
+              <button id="resetFieldsBtn" type="button" class="icon-btn" title="Reset all fields">🧹</button>
     </div>
 
-    <!-- Main Page -->
-    <div class="main-app" id="mainApp">
-        <button class="logout" onclick="logout()" id="logoutBtn" style="display:none;">Logout</button>
-        <button id="themeToggle">Switch Theme</button>
-        <div class="title-bar">
-            <h1>RockTech — Document Processing Suite</h1>
-            <p class="header-subtitle">Smart forms to flawless documents — fast, secure, and consistent.</p>
-
-	<!-- Top-right controls (near theme toggle) -->
-	<div id="voiceControls" style="position:fixed; top:20px; right:180px; display:flex; gap:8px; z-index:1000;">
-	  <select id="voiceLang" aria-label="Voice language">
-	    <option value="hi-IN">Hindi (hi-IN)</option>
-	    <option value="en-IN">English (en-IN)</option>
-	    <option value="en-US">English (en-US)</option>
-	  </select>
-	  <button id="voiceToggle" type="button" class="mic-btn" aria-pressed="false"
-        title="Start voice typing" aria-label="Start voice typing">
-  <span class="mic-ico" aria-hidden="true">🎤</span>
-  <span class="mic-dot" aria-hidden="true"></span>
-</button>
-			  <button id="refreshTplBtn" type="button" class="icon-btn" title="Reload .docx list">🔄</button>
-			  <button id="resetFieldsBtn" type="button" class="icon-btn" title="Reset all fields">🧹</button>
-	</div>
-
-        </div>
-
-        <div class="container">
-            <div class="form-container">
-                <div class="row" id="row1">
-                    <div>
-                        <label for="docid">Document No (if available)</label>
-                        <input type="text" id="docid">
-                    </div>
-                    <div>
-                        <label for="docdt">Document Dt. (if available)</label>
-                        <input type="date" id="docdt">
-                    </div>
-                    <div>
-                        <label for="court">Court</label>
-                        <select id="court">
-                            <option value="">Select Court</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="row" id="row2">
-                    <div>
-                        <label for="apptype">Applicant Type</label>
-                        <select id="apptype">
-                            <option value="">Select Type</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="appshort">Applicant Name (in short)</label>
-                        <input type="text" id="appshort">
-                    </div>
-                    <div>
-                        <label for="appfull">Applicant Name (full)</label>
-                        <textarea id="appfull"></textarea>
-                    </div>
-                    <div>
-                        <label for="appaddr">Applicant Address</label>
-                        <textarea id="appaddr">निवासी-, जिला-सिंगरौली (म.प्र.)</textarea>
-                    </div>
-                    <div>
-                        <label for="appjoin">Applicant Join (full)</label>
-                        <input type="text" id="appjoin" readonly>
-                    </div>
-                </div>
-                <div class="row" id="row3">
-                    <div>
-                        <label for="depotype">Deponent Type</label>
-                        <select id="depotype">
-                            <option value="">Select Type</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="deposhort">Deponent Name (in short)</label>
-                        <input type="text" id="deposhort">
-                    </div>
-                    <div>
-                        <label for="depofull">Deponent Name (full)</label>
-                        <textarea id="depofull"></textarea>
-                    </div>
-                    <div>
-                        <label for="depoaddr">Deponent Address</label>
-                        <textarea id="depoaddr">निवासी-, जिला-सिंगरौली (म.प्र.)</textarea>
-                    </div>
-                    <div>
-                        <label for="depojoin">Deponent Join (full)</label>
-                        <input type="text" id="depojoin" readonly>
-                    </div>
-                </div>
-                <div class="row" id="row4">
-                    <div>
-                        <label for="vill">Village</label>
-                        <select id="vill">
-                            <option value="">Select Village</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="khasara">Khasara & Rakava Details</label>
-                        <textarea id="khasara"></textarea>
-                    </div>
-                    <div>
-                        <label for="lowner">Land Owner Details</label>
-                        <textarea id="lowner"></textarea>
-                    </div>
-                    <!-- Shifted here -->
-                    <div>
-                        <label for="boundary">Boundary (if available)</label>
-                        <textarea id="boundary"></textarea>
-                    </div>
-                    <div>
-                        <label for="boundaryjoin">Boundary Join</label>
-                        <input type="text" id="boundaryjoin" readonly>
-                    </div>
-                </div>
-                <div class="row" id="row5">
-                    <div>
-                        <label for="dodate">Deceased Date (if available)</label>
-                        <input type="date" id="dodate">
-                    </div>
-                    <div>
-                        <label for="dlowner">Deceased Owner (if available)</label>
-                        <textarea id="dlowner"></textarea>
-                    </div>
-                    <!-- Replaced Boundary with Legal heirs -->
-                    <div>
-                        <label for="lheirs">Legal heirs (full)</label>
-                        <textarea id="lheirs"></textarea>
-                    </div>
-                    <div>
-                        <label for="lheirsjoin">Legal heirs Join</label>
-                        <input type="text" id="lheirsjoin" readonly>
-                    </div>
-                </div>
-                <div class="row" id="row6">
-                    <div>
-                        <label for="template">Template Name (.docx from GitHub)</label>
-                        <select id="template">
-                            <option value="">Loading templates...</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="outputname">Output file name (without extension)</label>
-                        <input type="text" id="outputname">
-                    </div>
-                    <button type="button" id="downloadBtn">Download .docx</button>
-                </div>
-            </div>
-            <!-- Right-Side Placeholder Panel -->
-            <div class="sidebar">
-                <h3>Placeholder Reference</h3>
-                <ul class="placeholder-list">
-                    <li><code>{DOCID}</code> Document No (if available)</li>
-                    <li><code>{DOCDT}</code> Document Dt. (dd.mm.yyyy)</li>
-                    <li><code>{COURT}</code> Court</li>
-                    <li><code>{APPTYPE}</code> Applicant Type</li>
-                    <li><code>{APPSHORT}</code> Applicant Name (short)</li>
-                    <li><code>{APPFULL}</code> Applicant Name (full)</li>
-                    <li><code>{APPADDR}</code> Applicant Address</li>
-                    <li><code>{APPJOIN}</code> Applicant Join</li>
-                    <li><code>{DEPOTYPE}</code> Deponent Type</li>
-                    <li><code>{DEPOSHORT}</code> Deponent Name (short)</li>
-                    <li><code>{DEPOFULL}</code> Deponent Name (full)</li>
-                    <li><code>{DEPOADDR}</code> Deponent Address</li>
-                    <li><code>{DEPOJOIN}</code> Deponent Join</li>
-                    <li><code>{VILL}</code> Village</li>
-                    <li><code>{KHASARA}</code> Khasara & Rakava Details</li>
-                    <li><code>{L_OWNER}</code> Land Owner Details</li>
-                    <li><code>{DO_DATE}</code> Deceased Date (dd.mm.yyyy)</li>
-                    <li><code>{DL_OWNER}</code> Deceased Owner (if available)</li>
-                    <li><code>{BOUNDARY}</code> Boundary (if available)</li>
-                    <li><code>{BOUNDARYJOIN}</code> Boundary Join</li>
-                    <li><code>{LHEIRS}</code> Legal heirs (full)</li>
-                    <li><code>{LHEIRSJOIN}</code> Legal heirs Join</li>
-                </ul>
-            </div>
-        </div>
-        <div class="footer">
-            Support 7869731689<br>
-            © 2025 Rock Technology All rights reserved. Version 1.0.3
-        </div>
+    <div class="title-bar">
+      <h1>RockTech — Document Processing Suite</h1>
+      <p class="header-subtitle">Smart forms to flawless documents — fast, secure, and consistent.</p>
     </div>
 
-    <script>
-        // Login functions
-        function login() {
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            if (username === 'RockTechnology' && password === 'Manish@31689') {
-                showMainApp();
-            } else {
-                // Silent fail
-                return;
-            }
-        }
+    <div class="container">
+      <!-- Left: Form -->
+      <div class="form-container">
+        <div class="row" id="row1">
+          <div>
+            <label for="docid">Document No (if available)</label>
+            <input type="text" id="docid">
+          </div>
+          <div>
+            <label for="docdt">Document Dt. (if available)</label>
+            <input type="date" id="docdt">
+          </div>
+          <div>
+            <label for="court">Court</label>
+            <select id="court"><option value="">Select Court</option></select>
+          </div>
+        </div>
 
-        function showMainApp() {
-            document.getElementById('loginSection').style.display = 'none';
-            document.getElementById('mainApp').classList.add('show');
-            document.getElementById('logoutBtn').style.display = 'block';
-        }
+        <div class="row" id="row2">
+          <div>
+            <label for="apptype">Applicant Type</label>
+            <select id="apptype"><option value="">Select Type</option></select>
+          </div>
+          <div>
+            <label for="appshort">Applicant Name (in short)</label>
+            <input type="text" id="appshort">
+          </div>
+          <div>
+            <label for="appfull">Applicant Name (full)</label>
+            <textarea id="appfull"></textarea>
+          </div>
+          <div>
+            <label for="appaddr">Applicant Address</label>
+            <textarea id="appaddr">निवासी-, जिला-सिंगरौली (म.प्र.)</textarea>
+          </div>
+          <div>
+            <label for="appjoin">Applicant Join (full)</label>
+            <input type="text" id="appjoin" readonly>
+          </div>
+        </div>
 
-        function logout() {
-            document.getElementById('mainApp').classList.remove('show');
-            document.getElementById('loginSection').style.display = 'flex';
-            document.getElementById('logoutBtn').style.display = 'none';
-            document.getElementById('username').value = '';
-            document.getElementById('password').value = '';
-            location.reload();
-        }
+        <div class="row" id="row3">
+          <div>
+            <label for="depotype">Deponent Type</label>
+            <select id="depotype"><option value="">Select Type</option></select>
+          </div>
+          <div>
+            <label for="deposhort">Deponent Name (in short)</label>
+            <input type="text" id="deposhort">
+          </div>
+          <div>
+            <label for="depofull">Deponent Name (full)</label>
+            <textarea id="depofull"></textarea>
+          </div>
+          <div>
+            <label for="depoaddr">Deponent Address</label>
+            <textarea id="depoaddr">निवासी-, जिला-सिंगरौली (म.प्र.)</textarea>
+          </div>
+          <div>
+            <label for="depojoin">Deponent Join (full)</label>
+            <input type="text" id="depojoin" readonly>
+          </div>
+        </div>
 
-        // Add Enter key support for login
-        document.addEventListener('DOMContentLoaded', () => {
-            const usernameInput = document.getElementById('username');
-            const passwordInput = document.getElementById('password');
+        <div class="row" id="row4">
+          <div>
+            <label for="vill">Village</label>
+            <select id="vill"><option value="">Select Village</option></select>
+          </div>
+          <div>
+            <label for="khasara">Khasara & Rakava Details</label>
+            <textarea id="khasara"></textarea>
+          </div>
+          <div>
+            <label for="lowner">Land Owner Details</label>
+            <textarea id="lowner"></textarea>
+          </div>
+          <div>
+            <label for="boundary">Boundary (if available)</label>
+            <textarea id="boundary"></textarea>
+          </div>
+          <div>
+            <label for="boundaryjoin">Boundary Join</label>
+            <input type="text" id="boundaryjoin" readonly>
+          </div>
+        </div>
 
-            // Listen for Enter on username or password fields
-            [usernameInput, passwordInput].forEach(input => {
-                input.addEventListener('keydown', (event) => {
-                    if (event.key === 'Enter') {
-                        login(); // Trigger login function
-                    }
-                });
-            });
+        <div class="row" id="row5">
+          <div>
+            <label for="dodate">Deceased Date (if available)</label>
+            <input type="date" id="dodate">
+          </div>
+          <div>
+            <label for="dlowner">Deceased Owner (if available)</label>
+            <textarea id="dlowner"></textarea>
+          </div>
+          <div>
+            <label for="lheirs">Legal heirs (full)</label>
+            <textarea id="lheirs"></textarea>
+          </div>
+          <div>
+            <label for="lheirsjoin">Legal heirs Join</label>
+            <input type="text" id="lheirsjoin" readonly>
+          </div>
+        </div>
 
-// Voice typing (single global Start/Stop targeting focused field)
-(function setupGlobalVoiceTyping(){
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  const voiceToggle = document.getElementById('voiceToggle');
-  const voiceLang = document.getElementById('voiceLang');
+        <div class="row" id="row6">
+          <div>
+            <label for="template">Template Name (.docx from GitHub)</label>
+            <div style="display:flex; gap:10px; align-items:flex-end;">
+              <select id="template" style="min-width:260px;">
+                <option value="">Loading templates...</option>
+              </select>
 
-  if (!voiceToggle || !voiceLang) return;
+            </div>
+          </div>
+          <div>
+            <label for="outputname">Output file name (without extension)</label>
+            <input type="text" id="outputname" placeholder="output">
+          </div>
+          <button type="button" id="downloadBtn">Download .docx</button>
+        </div>
 
-  if (!SR) {
-    voiceToggle.disabled = true;
-    voiceToggle.classList.add('na');
-    voiceToggle.title = 'Voice not supported in this browser';
-    voiceToggle.setAttribute('aria-label','Voice not supported');
-    return;
-  }
+        <!-- Placeholders row after last row -->
+        <div class="row" id="rowPlaceholders">
+          <div style="grid-column:1/-1;">
+            <h3 style="margin:0 0 10px; color: var(--accent-rose);">Placeholder Reference</h3>
+            <ul class="placeholder-list">
+              <li><code>{DOCID}</code> Document No (if available)</li>
+              <li><code>{DOCDT}</code> Document Dt. (dd.mm.yyyy)</li>
+              <li><code>{COURT}</code> Court</li>
+              <li><code>{APPTYPE}</code> Applicant Type</li>
+              <li><code>{APPSHORT}</code> Applicant Name (short)</li>
+              <li><code>{APPFULL}</code> Applicant Name (full)</li>
+              <li><code>{APPADDR}</code> Applicant Address</li>
+              <li><code>{APPJOIN}</code> Applicant Join</li>
+              <li><code>{DEPOTYPE}</code> Deponent Type</li>
+              <li><code>{DEPOSHORT}</code> Deponent Name (short)</li>
+              <li><code>{DEPOFULL}</code> Deponent Name (full)</li>
+              <li><code>{DEPOADDR}</code> Deponent Address</li>
+              <li><code>{DEPOJOIN}</code> Deponent Join</li>
+              <li><code>{VILL}</code> Village</li>
+              <li><code>{KHASARA}</code> Khasara & Rakava Details</li>
+              <li><code>{L_OWNER}</code> Land Owner Details</li>
+              <li><code>{DO_DATE}</code> Deceased Date (dd.mm.yyyy)</li>
+              <li><code>{DL_OWNER}</code> Deceased Owner (if available)</li>
+              <li><code>{BOUNDARY}</code> Boundary (if available)</li>
+              <li><code>{BOUNDARYJOIN}</code> Boundary Join</li>
+              <li><code>{LHEIRS}</code> Legal heirs (full)</li>
+              <li><code>{LHEIRSJOIN}</code> Legal heirs Join</li>
+            </ul>
+          </div>
+        </div>
+      </div>
 
-  let recognition = null;
-  let listening = false;
-  let lastEditable = null;
+      <!-- Right: Live Preview -->
+      <div class="preview-panel">
+        <h3>Live Preview</h3>
+        <div id="previewStatus" class="preview-status">Select a template to preview…</div>
+        <div id="previewContent" class="preview-content"></div>
+      </div>
+    </div>
 
-  function isEditable(el){
-    if (!el) return false;
-    const tag = el.tagName;
-    const editable = (tag === 'TEXTAREA') || (tag === 'INPUT' && el.type !== 'button' && el.type !== 'submit');
-    return editable && !el.readOnly && !el.disabled;
-  }
+    <div class="footer" style="text-align:center; margin-top: 10px; padding: 20px; color: var(--border-coffee); font-size: 12px; border-top: 1px solid var(--border-coffee);">
+      Support 9876543210<br>
+      © 2025 Rock Technology All rights reserved. Version 1.0
+    </div>
+  </div>
 
-  // Track last-focused editable element
-  document.addEventListener('focusin', (e) => {
-    if (isEditable(e.target)) lastEditable = e.target;
-  });
-
-  function getTargetField(){
-    const active = document.activeElement;
-    if (isEditable(active)) return active;
-    if (isEditable(lastEditable)) return lastEditable;
-    return null;
-  }
-
-  function insertAtCursor(el, text){
-    const start = el.selectionStart ?? el.value.length;
-    const end = el.selectionEnd ?? start;
-    const before = el.value.slice(0, start);
-    const after = el.value.slice(end);
-    el.value = before + text + after;
-    const pos = start + text.length;
-    if (typeof el.setSelectionRange === 'function') el.setSelectionRange(pos, pos);
-  }
-
-  function startRec(){
-    recognition = new SR();
-    recognition.lang = voiceLang.value || document.documentElement.lang || 'en-IN';
-    recognition.continuous = true;
-    recognition.interimResults = true;
-
-    recognition.onresult = (e) => {
-      let finalText = '';
-      for (let i = e.resultIndex; i < e.results.length; i++){
-        const r = e.results[i];
-        if (r.isFinal) finalText += r[0].transcript + ' ';
-      }
-      if (!finalText.trim()) return;
-      const target = getTargetField();
-      if (!target) return;
-
-      // Add a space/newline only when appending at line-end
-      const atEnd = target.selectionStart === target.selectionEnd && target.selectionStart === target.value.length;
-      const needsSep = atEnd && target.value && !/\s$/.test(target.value);
-      const sep = target.tagName === 'TEXTAREA' ? '\n' : ' ';
-      const textToInsert = (needsSep ? sep : '') + finalText.trim();
-
-      insertAtCursor(target, textToInsert);
-      // Trigger existing join updates (appfull→appjoin, depofull→depojoin, boundary→boundaryjoin)
-      target.dispatchEvent(new Event('input', { bubbles: true }));
-    };
-
-    recognition.onstart = () => setListeningUI(true);
-    recognition.onend = () => setListeningUI(false);
-    recognition.onerror = () => setListeningUI(false);
-
-    recognition.start(); // must be user-initiated
-  }
-
-  function stopRec(){
-    if (recognition) recognition.stop();
-  }
-
-  voiceToggle.addEventListener('click', () => {
-    if (listening) stopRec(); else startRec();
-  });
-
-  voiceLang.addEventListener('change', () => {
-    // Apply new language immediately if listening
-    if (listening) { stopRec(); setTimeout(startRec, 100); }
-  });
-})();
-
-
-
-            // Rest of the app init
-            const courtOptions = ["तहसील-सिंगरौली नगर", "वृत्‍त-पंजरेह, तहसील-सिंगरौली नगर", "वृत्‍त-कचनी, तहसील-सिंगरौली नगर"];
-            const apptypeOptions = ["आवेदक", "आवेदिका", "आवेदकगण", "आवेदिकागण"];
-            const depotypeOptions = ["अनावेदक", "अनावेदिका", "अनावेदकगण", "अनावेदिकागण"];
-            const villageOptions = ["गनियारी", "बैढ़न", "देवरा"];
-
-            function populateDropdown(id, options) {
-                const select = document.getElementById(id);
-                options.forEach(opt => {
-                    const option = document.createElement('option');
-                    option.value = opt;
-                    option.textContent = opt;
-                    select.appendChild(option);
-                });
-            }
-
-            function updateJoinField(fullId, joinId) {
-                const fullTextarea = document.getElementById(fullId);
-                const joinInput = document.getElementById(joinId);
-                const update = () => {
-                    const lines = fullTextarea.value.split('\n').map(l => l.trim()).filter(l => l);
-                    joinInput.value = lines.join(', ');
-                };
-                fullTextarea.addEventListener('input', update);
-                update();
-            }
-
-            // Format date to dd.mm.yyyy
-            function formatDateToDDMMYYYY(dateString) {
-                if (!dateString) return '';
-                const [year, month, day] = dateString.split('-');
-                return `${day.padStart(2, '0')}.${month.padStart(2, '0')}.${year}`;
-            }
-
-// Replace your existing loadTemplates with this more robust version
-async function loadTemplates(force = false) {
-  const baseUrl = 'https://api.github.com/repos/rocktech-web/AIOFormat/contents/';
-  const url = force ? `${baseUrl}?_ts=${Date.now()}` : baseUrl;
-
-  const select = document.getElementById('template');
-  if (!select) return;
-
-  const prev = select.value;
-  select.innerHTML = '<option value="">Loading templates...</option>';
-
-  const res = await fetch(url, {
-    method: 'GET',
-    headers: { 'Accept': 'application/vnd.github+json' },
-    cache: 'no-store' // bypass browser caches
-  });
-
-  if (!res.ok) {
-    const remain = res.headers.get('x-ratelimit-remaining');
-    const limitMsg = (res.status === 403 && remain === '0')
-      ? 'Rate limit exceeded. Try later or authenticate.'
-      : `Error ${res.status}.`;
-    select.innerHTML = `<option value="">${limitMsg}</option>`;
-    return;
-  }
-
-  const data = await res.json();
-  const docx = (Array.isArray(data) ? data : [])
-    .filter(item => item && item.type === 'file' && item.name && item.name.endsWith('.docx'))
-    .map(item => item.name)
-    .sort((a,b) => a.localeCompare(b));
-
-  select.innerHTML = '<option value="">Select Template</option>';
-  docx.forEach(name => {
-    const opt = document.createElement('option');
-    opt.value = name;
-    opt.textContent = name;
-    select.appendChild(opt);
-  });
-
-  // Try to keep previous selection if still present
-  if (prev && docx.includes(prev)) select.value = prev;
-}
-
-// Wire the refresh button (keep this inside DOMContentLoaded)
-const refreshBtn = document.getElementById('refreshTplBtn');
-if (refreshBtn) {
-  refreshBtn.addEventListener('click', async () => {
-    const btn = refreshBtn;
-    btn.disabled = true;
-    btn.classList.add('spin');
-    try {
-      await loadTemplates(true); // force no-cache refresh
-    } catch (e) {
-      console.error(e);
-      const select = document.getElementById('template');
-      if (select) select.innerHTML = '<option value="">Reload failed</option>';
-    } finally {
-      btn.classList.remove('spin');
-      btn.disabled = false;
+  <script>
+    // Login
+    function login(e) {
+      if (e && typeof e.preventDefault === 'function') e.preventDefault();
+      const username = (document.getElementById('username').value || '').trim();
+      const password = (document.getElementById('password').value || '').trim();
+      if (username === 'RockTechnology' && password === 'Manish@31689') {
+        showMainApp();
+      } else { return; }
     }
-  });
-}
+    function showMainApp() {
+      document.getElementById('loginSection').style.display = 'none';
+      document.getElementById('mainApp').classList.add('show');
+      document.getElementById('logoutBtn').style.display = 'block';
+    }
+    function logout() {
+      document.getElementById('mainApp').classList.remove('show');
+      document.getElementById('loginSection').style.display = 'flex';
+      document.getElementById('logoutBtn').style.display = 'none';
+      document.getElementById('username').value = '';
+      document.getElementById('password').value = '';
+      location.reload();
+    }
 
-            async function generateAndDownload() {
-                const appfullValue = document.getElementById('appfull').value;
-                const depofullValue = document.getElementById('depofull').value;
-                const boundaryValue = document.getElementById('boundary').value;
-                const lheirsValue = document.getElementById('lheirs').value;
-                const docdtValue = document.getElementById('docdt').value;
-                const dodateValue = document.getElementById('dodate').value;
+    document.addEventListener('DOMContentLoaded', () => {
+      // Bind login form submit + Enter key
+      const form = document.getElementById('loginForm');
+      if (form) form.addEventListener('submit', login);
+      ['username','password'].forEach(id=>{
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('keydown', e=>{ if (e.key === 'Enter') login(e); });
+      });
 
-                // Prepare lines for multiline fields (filter empty)
-                const appfullLines = appfullValue ? appfullValue.split('\n').map(l => l.trim()).filter(l => l) : [];
-                const depofullLines = depofullValue ? depofullValue.split('\n').map(l => l.trim()).filter(l => l) : [];
-                const boundaryLines = boundaryValue ? boundaryValue.split('\n').map(l => l.trim()).filter(l => l) : [];
-                const lheirsLines = lheirsValue ? lheirsValue.split('\n').map(l => l.trim()).filter(l => l) : [];
+      // Options
+      const courtOptions = ["तहसील-सिंगरौली नगर", "वृत्‍त-पंजरेह, तहसील-सिंगरौली नगर", "वृत्‍त-कचनी, तहसील-सिंगरौली नगर"];
+      const apptypeOptions = ["आवेदक", "आवेदिका", "आवेदकगण", "आवेदिकागण"];
+      const depotypeOptions = ["अनावेदक", "अनावेदिका", "अनावेदकगण", "अनावेदिकागण"];
+      const villageOptions = ["गनियारी", "बैढ़न", "देवरा"];
 
-                const context = {
-                    DOCID: document.getElementById('docid').value || '',
-                    DOCDT: formatDateToDDMMYYYY(docdtValue) || '',
-                    COURT: document.getElementById('court').value || '',
-                    APPTYPE: document.getElementById('apptype').value || '',
-                    APPSHORT: document.getElementById('appshort').value || '',
-                    APPFULL: appfullLines.join('\n'), // Line breaks within paragraph
-                    APPJOIN: appfullLines.join(', '), // Comma-separated join
-                    APPADDR: document.getElementById('appaddr').value || '',
-                    DEPOTYPE: document.getElementById('depotype').value || '',
-                    DEPOSHORT: document.getElementById('deposhort').value || '',
-                    DEPOFULL: depofullLines.join('\n'), // Line breaks within paragraph
-                    DEPOJOIN: depofullLines.join(', '), // Comma-separated join
-                    DEPOADDR: document.getElementById('depoaddr').value || '',
-                    VILL: document.getElementById('vill').value || '',
-                    KHASARA: document.getElementById('khasara').value || '',
-                    L_OWNER: document.getElementById('lowner').value || '',
-                    DO_DATE: formatDateToDDMMYYYY(dodateValue) || '',
-                    DL_OWNER: document.getElementById('dlowner').value || '',
-                    BOUNDARY: boundaryLines.join('\n'), // Line breaks within paragraph
-                    BOUNDARYJOIN: boundaryLines.join(', '), // Comma-separated join
-                    LHEIRS: lheirsLines.join('\n'), // Line breaks within paragraph
-                    LHEIRSJOIN: lheirsLines.join(', ') // Comma-separated join
-                };
+      function populateDropdown(id, options) {
+        const select = document.getElementById(id);
+        options.forEach(opt => {
+          const option = document.createElement('option');
+          option.value = opt; option.textContent = opt;
+          select.appendChild(option);
+        });
+      }
 
-                const templateName = document.getElementById('template').value;
-                if (!templateName) {
-                    return; // Silent
-                }
+      function updateJoinField(fullId, joinId) {
+        const fullTextarea = document.getElementById(fullId);
+        const joinInput = document.getElementById(joinId);
+        const update = () => {
+          const lines = fullTextarea.value.split('\n').map(l => l.trim()).filter(l => l);
+          joinInput.value = lines.join(', ');
+        };
+        fullTextarea.addEventListener('input', update);
+        update();
+      }
 
-                const outputName = document.getElementById('outputname').value || 'output';
-                const rawUrl = `https://raw.githubusercontent.com/rocktech-web/AIOFormat/main/${templateName}`;
+      function formatDateToDDMMYYYY(dateString) {
+        if (!dateString) return '';
+        const [year, month, day] = dateString.split('-');
+        return `${day.padStart(2, '0')}.${month.padStart(2, '0')}.${year}`;
+      }
 
-                try {
-                    const response = await fetch(rawUrl);
-                    const buffer = await response.arrayBuffer();
-                    const zip = new PizZip(buffer);
-                    const doc = new docxtemplater(zip, {
-                        paragraphLoop: true,
-                        linebreaks: true
-                    });
+      // Robust template loader (supports reload)
+      async function loadTemplates(force = false) {
+        const baseUrl = 'https://api.github.com/repos/rocktech-web/AIOFormat/contents/';
+        const url = force ? `${baseUrl}?_ts=${Date.now()}` : baseUrl;
+        const select = document.getElementById('template');
+        if (!select) return;
 
-                    doc.setData(context);
-                    doc.render();
+        const prev = select.value;
+        select.innerHTML = '<option value="">Loading templates...</option>';
 
-                    const blob = doc.getZip().generate({
-                        type: 'blob',
-                        mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                    });
-
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `${outputName}.docx`;
-                    a.click();
-                    URL.revokeObjectURL(url);
-                } catch (e) {
-                    console.error('Error:', e);
-                }
-            }
-
-            populateDropdown('court', courtOptions);
-            populateDropdown('apptype', apptypeOptions);
-            populateDropdown('depotype', depotypeOptions);
-            populateDropdown('vill', villageOptions);
-            loadTemplates();
-
-            updateJoinField('appfull', 'appjoin');
-            updateJoinField('depofull', 'depojoin');
-            updateJoinField('boundary', 'boundaryjoin');
-            updateJoinField('lheirs', 'lheirsjoin');
-
-            document.getElementById('downloadBtn').addEventListener('click', generateAndDownload);
-
-            document.getElementById('themeToggle').addEventListener('click', () => {
-                // Simple brightness toggle for subtle variation in theme
-                document.body.style.filter = document.body.style.filter === 'brightness(1.1)' ? 'none' : 'brightness(1.1)';
-            });
+        const res = await fetch(url, {
+          method: 'GET',
+          headers: { 'Accept': 'application/vnd.github+json' },
+          cache: 'no-store'
         });
 
+        if (!res.ok) {
+          const remain = res.headers.get('x-ratelimit-remaining');
+          const msg = (res.status === 403 && remain === '0')
+            ? 'Rate limit exceeded. Try later or authenticate.'
+            : `Error ${res.status}.`;
+          select.innerHTML = `<option value="">${msg}</option>`;
+          return;
+        }
 
-// 🧹 Reset all fields to defaults
-function resetAllFields(){
-  const defaults = {
-    appaddr: 'निवासी-, जिला-सिंगरौली (म.प्र.)',
-    depoaddr: 'निवासी-, जिला-सिंगरौली (म.प्र.)'
-  };
+        const data = await res.json();
+        const docx = (Array.isArray(data) ? data : [])
+          .filter(item => item && item.type === 'file' && item.name && item.name.endsWith('.docx'))
+          .map(item => item.name)
+          .sort((a,b) => a.localeCompare(b));
 
-  // साफ़ करें: inputs, textareas, selects (readOnly भी खाली)
-  const scope = document.querySelector('#mainApp .form-container');
-  if (!scope) return;
-  const nodes = scope.querySelectorAll('input, textarea, select');
+        select.innerHTML = '<option value="">Select Template</option>';
+        docx.forEach(name => {
+          const opt = document.createElement('option');
+          opt.value = name; opt.textContent = name; select.appendChild(opt);
+        });
 
-  nodes.forEach(el => {
-    if (el.tagName === 'SELECT'){
-      el.selectedIndex = 0; // first option (e.g., "Select ...")
-      return;
-    }
-    if (el.tagName === 'TEXTAREA'){
-      if (el.id === 'appaddr') { el.value = defaults.appaddr; return; }
-      if (el.id === 'depoaddr') { el.value = defaults.depoaddr; return; }
-      el.value = '';
-      return;
-    }
-    if (el.type === 'date'){ el.value = ''; return; }
-    if (el.type === 'text'){ el.value = ''; return; }
-  });
+        if (prev && docx.includes(prev)) select.value = prev;
+      }
 
-  // join-fields तुरंत अपडेट हों
-  ['appfull','depofull','boundary','lheirs'].forEach(id=>{
-    const el = document.getElementById(id);
-    if (el) el.dispatchEvent(new Event('input', { bubbles:true }));
-  });
+      // Build context shared by download and preview
+      function buildContext(){
+        const split = v => (v || '').split('\n').map(l=>l.trim()).filter(Boolean);
+        const appfull = split(document.getElementById('appfull').value);
+        const depofull = split(document.getElementById('depofull').value);
+        const boundary = split(document.getElementById('boundary').value);
+        const lheirs = split(document.getElementById('lheirs').value);
 
-  // फोकस पहले फील्ड पर
-  const first = document.getElementById('docid');
-  if (first) first.focus();
-}
+        return {
+          DOCID: document.getElementById('docid').value || '',
+          DOCDT: formatDateToDDMMYYYY(document.getElementById('docdt').value || ''),
+          COURT: document.getElementById('court').value || '',
+          APPTYPE: document.getElementById('apptype').value || '',
+          APPSHORT: document.getElementById('appshort').value || '',
+          APPFULL: appfull.join('\n'),
+          APPJOIN: appfull.join(', '),
+          APPADDR: document.getElementById('appaddr').value || '',
+          DEPOTYPE: document.getElementById('depotype').value || '',
+          DEPOSHORT: document.getElementById('deposhort').value || '',
+          DEPOFULL: depofull.join('\n'),
+          DEPOJOIN: depofull.join(', '),
+          DEPOADDR: document.getElementById('depoaddr').value || '',
+          VILL: document.getElementById('vill').value || '',
+          KHASARA: document.getElementById('khasara').value || '',
+          L_OWNER: document.getElementById('lowner').value || '',
+          DO_DATE: formatDateToDDMMYYYY(document.getElementById('dodate').value || ''),
+          DL_OWNER: document.getElementById('dlowner').value || '',
+          BOUNDARY: boundary.join('\n'),
+          BOUNDARYJOIN: boundary.join(', '),
+          LHEIRS: lheirs.join('\n'),
+          LHEIRSJOIN: lheirs.join(', ')
+        };
+      }
 
-const resetBtn = document.getElementById('resetFieldsBtn');
-if (resetBtn){
-  resetBtn.addEventListener('click', resetAllFields);
-}
+      // Download
+      async function generateAndDownload() {
+        const templateName = document.getElementById('template').value;
+        if (!templateName) return;
 
-    </script>
+        const context = buildContext();
+        const outputName = document.getElementById('outputname').value || 'output';
+        const rawUrl = `https://raw.githubusercontent.com/rocktech-web/AIOFormat/main/${templateName}`;
+
+        try {
+          const response = await fetch(rawUrl, { cache: 'no-store' });
+          const buffer = await response.arrayBuffer();
+          const zip = new PizZip(buffer);
+          const doc = new docxtemplater(zip, { paragraphLoop: true, linebreaks: true });
+          doc.setData(context);
+          doc.render();
+
+          const blob = doc.getZip().generate({
+            type: 'blob',
+            mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          });
+
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url; a.download = `${outputName}.docx`;
+          a.click(); URL.revokeObjectURL(url);
+        } catch (e) { console.error('Error:', e); }
+      }
+
+      // Live Preview using mammoth
+      let previewTimer = null;
+      async function generatePreview(){
+        const templateName = document.getElementById('template').value;
+        const statusEl = document.getElementById('previewStatus');
+        const previewEl = document.getElementById('previewContent');
+
+        if (!templateName){
+          if (statusEl) statusEl.textContent = 'Select a template to preview…';
+          if (previewEl) previewEl.innerHTML = '';
+          return;
+        }
+        if (statusEl) statusEl.textContent = 'Rendering preview…';
+
+        try {
+          const rawUrl = `https://raw.githubusercontent.com/rocktech-web/AIOFormat/main/${templateName}`;
+          const response = await fetch(rawUrl, { cache: 'no-store' });
+          const buffer = await response.arrayBuffer();
+
+          const zip = new PizZip(buffer);
+          const doc = new docxtemplater(zip, { paragraphLoop: true, linebreaks: true });
+          doc.setData(buildContext());
+          doc.render();
+
+          const blob = doc.getZip().generate({
+            type: 'blob',
+            mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          });
+
+          const arr = await blob.arrayBuffer();
+          const result = await window.mammoth.convertToHtml({ arrayBuffer: arr });
+          if (previewEl) previewEl.innerHTML = result.value || '<em>No content</em>';
+          if (statusEl) statusEl.textContent = 'Preview ready';
+        } catch (e) {
+          console.error(e);
+          if (statusEl) statusEl.textContent = 'Preview failed';
+        }
+      }
+      function schedulePreviewUpdate(){
+        clearTimeout(previewTimer);
+        previewTimer = setTimeout(generatePreview, 400);
+      }
+
+      // Voice typing (global icon)
+      (function setupGlobalVoiceTyping(){
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const voiceToggle = document.getElementById('voiceToggle');
+        const voiceLang = document.getElementById('voiceLang');
+        if (!voiceToggle || !voiceLang) return;
+
+        if (!SR) {
+          voiceToggle.disabled = true;
+          voiceToggle.classList.add('na');
+          voiceToggle.title = 'Voice not supported in this browser';
+          voiceToggle.setAttribute('aria-label','Voice not supported');
+          return;
+        }
+
+        let recognition = null;
+        let listening = false;
+        let lastEditable = null;
+
+        function isEditable(el){
+          if (!el) return false;
+          const tag = el.tagName;
+          const editable = (tag === 'TEXTAREA') || (tag === 'INPUT' && el.type !== 'button' && el.type !== 'submit');
+          return editable && !el.readOnly && !el.disabled;
+        }
+        document.addEventListener('focusin', (e) => { if (isEditable(e.target)) lastEditable = e.target; });
+
+        function getTargetField(){
+          const active = document.activeElement;
+          if (isEditable(active)) return active;
+          if (isEditable(lastEditable)) return lastEditable;
+          return null;
+        }
+        function insertAtCursor(el, text){
+          const start = el.selectionStart ?? el.value.length;
+          const end = el.selectionEnd ?? start;
+          const before = el.value.slice(0, start);
+          const after = el.value.slice(end);
+          el.value = before + text + after;
+          const pos = start + text.length;
+          if (typeof el.setSelectionRange === 'function') el.setSelectionRange(pos, pos);
+        }
+        function setListeningUI(on){
+          listening = on;
+          voiceToggle.classList.toggle('listening', on);
+          voiceToggle.setAttribute('aria-pressed', on ? 'true' : 'false');
+          voiceToggle.title = on ? 'Stop voice typing' : 'Start voice typing';
+          voiceToggle.setAttribute('aria-label', on ? 'Stop voice typing' : 'Start voice typing');
+        }
+        function startRec(){
+          recognition = new SR();
+          recognition.lang = voiceLang.value || document.documentElement.lang || 'en-IN';
+          recognition.continuous = true;
+          recognition.interimResults = true;
+
+          recognition.onresult = (e) => {
+            let finalText = '';
+            for (let i = e.resultIndex; i < e.results.length; i++){
+              const r = e.results[i];
+              if (r.isFinal) finalText += r[0].transcript + ' ';
+            }
+            if (!finalText.trim()) return;
+            const target = getTargetField();
+            if (!target) return;
+
+            const atEnd = target.selectionStart === target.selectionEnd && target.selectionStart === target.value.length;
+            const needsSep = atEnd && target.value && !/\s$/.test(target.value);
+            const sep = target.tagName === 'TEXTAREA' ? '\n' : ' ';
+            const textToInsert = (needsSep ? sep : '') + finalText.trim();
+
+            insertAtCursor(target, textToInsert);
+            target.dispatchEvent(new Event('input', { bubbles: true }));
+          };
+
+          recognition.onstart = () => setListeningUI(true);
+          recognition.onend = () => setListeningUI(false);
+          recognition.onerror = () => setListeningUI(false);
+
+          recognition.start();
+        }
+        function stopRec(){ if (recognition) recognition.stop(); }
+
+        voiceToggle.addEventListener('click', () => { if (listening) stopRec(); else startRec(); });
+        voiceLang.addEventListener('change', () => { if (listening) { stopRec(); setTimeout(startRec, 100); } });
+      })();
+
+      // Init dropdowns
+      populateDropdown('court', courtOptions);
+      populateDropdown('apptype', apptypeOptions);
+      populateDropdown('depotype', depotypeOptions);
+      populateDropdown('vill', villageOptions);
+
+      // Auto-joiners
+      updateJoinField('appfull', 'appjoin');
+      updateJoinField('depofull', 'depojoin');
+      updateJoinField('boundary', 'boundaryjoin');
+      updateJoinField('lheirs', 'lheirsjoin');
+
+      // Template load
+      loadTemplates();
+
+      // Download
+      document.getElementById('downloadBtn').addEventListener('click', generateAndDownload);
+
+      // Live preview triggers
+      const formScope = document.querySelector('#mainApp .form-container');
+      ['input','change'].forEach(evt=>{
+        formScope.addEventListener(evt, e => {
+          if (e.target && e.target.matches('input, textarea, select')) schedulePreviewUpdate();
+        });
+      });
+      document.getElementById('template').addEventListener('change', generatePreview);
+
+      // Theme toggle
+      document.getElementById('themeToggle').addEventListener('click', () => {
+        document.body.style.filter = document.body.style.filter === 'brightness(1.1)' ? 'none' : 'brightness(1.1)';
+      });
+
+      // Reload templates button
+      const refreshBtn = document.getElementById('refreshTplBtn');
+      refreshBtn.addEventListener('click', async () => {
+        refreshBtn.disabled = true; refreshBtn.classList.add('spin');
+        const tplSelect = document.getElementById('template');
+        const prevHTML = tplSelect.innerHTML;
+        tplSelect.innerHTML = '<option value="">Loading templates...</option>';
+        try { await loadTemplates(true); }
+        catch(e){ console.error(e); tplSelect.innerHTML = prevHTML || '<option value="">Reload failed</option>'; }
+        finally { refreshBtn.classList.remove('spin'); refreshBtn.disabled = false; }
+      });
+
+      // Reset fields button
+      function resetAllFields(){
+        const defaults = {
+          appaddr: 'निवासी-, जिला-सिंगरौली (म.प्र.)',
+          depoaddr: 'निवासी-, जिला-सिंगरौली (म.प्र.)'
+        };
+        const scope = document.querySelector('#mainApp .form-container');
+        const nodes = scope.querySelectorAll('input, textarea, select');
+
+        nodes.forEach(el => {
+          if (el.tagName === 'SELECT'){ el.selectedIndex = 0; return; }
+          if (el.tagName === 'TEXTAREA'){
+            if (el.id === 'appaddr') { el.value = defaults.appaddr; return; }
+            if (el.id === 'depoaddr') { el.value = defaults.depoaddr; return; }
+            el.value = ''; return;
+          }
+          if (el.type === 'date'){ el.value = ''; return; }
+          if (el.type === 'text'){ el.value = ''; return; }
+        });
+
+        ['appfull','depofull','boundary','lheirs'].forEach(id=>{
+          const el = document.getElementById(id);
+          if (el) el.dispatchEvent(new Event('input', { bubbles:true }));
+        });
+
+        const first = document.getElementById('docid');
+        if (first) first.focus();
+        schedulePreviewUpdate();
+      }
+      document.getElementById('resetFieldsBtn').addEventListener('click', resetAllFields);
+    });
+  </script>
 </body>
 </html>
