@@ -160,6 +160,19 @@
             font-size: 24px;
             font-weight: bold;
         }
+
+  	#voiceToggle {
+	    background: linear-gradient(90deg, var(--accent-rose), #FFE5CF);
+	    color: var(--text-dark);
+	    padding: 10px 14px;
+	    border: none;
+	    border-radius: 8px;
+	    cursor: pointer;
+	    font-size: 14px;
+	    font-weight: bold;
+  	}
+	#voiceToggle.active { outline: 2px solid #FF885B; }
+
         .header-subtitle {
             color: var(--text-dark);
             margin: 5px 0 0;
@@ -282,7 +295,7 @@
         </div>
         <div class="login-footer">
             Support: 7869731689<br>
-            © 2025 Rock Technology - All rights reserved. Version 1.0.1
+            © 2025 Rock Technology - All rights reserved. Version 1.0.2
         </div>
     </div>
 
@@ -293,7 +306,20 @@
         <div class="title-bar">
             <h1>RockTech — Document Processing Suite</h1>
             <p class="header-subtitle">Smart forms to flawless documents — fast, secure, and consistent.</p>
+
+	<!-- Top-right controls (near theme toggle) -->
+	<div id="voiceControls" style="position:fixed; top:20px; right:180px; display:flex; gap:8px; z-index:1000;">
+	  <select id="voiceLang" aria-label="Voice language">
+	    <option value="hi-IN">Hindi (hi-IN)</option>
+	    <option value="en-IN">English (en-IN)</option>
+	    <option value="en-US">English (en-US)</option>
+	  </select>
+	  <button id="voiceToggle" type="button">Start Voice</button>
+	</div>
+
+
         </div>
+
         <div class="container">
             <div class="form-container">
                 <div class="row" id="row1">
@@ -449,7 +475,7 @@
         </div>
         <div class="footer">
             Support 7869731689<br>
-            © 2025 Rock Technology - All rights reserved. Version 1.0.1
+            © 2025 Rock Technology All rights reserved. Version 1.0.2
         </div>
     </div>
 
@@ -494,6 +520,112 @@
                     }
                 });
             });
+
+// Voice typing (single global Start/Stop targeting focused field)
+(function setupGlobalVoiceTyping(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const voiceToggle = document.getElementById('voiceToggle');
+  const voiceLang = document.getElementById('voiceLang');
+
+  if (!voiceToggle || !voiceLang) return;
+
+  if (!SR) {
+    voiceToggle.disabled = true;
+    voiceToggle.textContent = 'Voice N/A';
+    return;
+  }
+
+  let recognition = null;
+  let listening = false;
+  let lastEditable = null;
+
+  function isEditable(el){
+    if (!el) return false;
+    const tag = el.tagName;
+    const editable = (tag === 'TEXTAREA') || (tag === 'INPUT' && el.type !== 'button' && el.type !== 'submit');
+    return editable && !el.readOnly && !el.disabled;
+  }
+
+  // Track last-focused editable element
+  document.addEventListener('focusin', (e) => {
+    if (isEditable(e.target)) lastEditable = e.target;
+  });
+
+  function getTargetField(){
+    const active = document.activeElement;
+    if (isEditable(active)) return active;
+    if (isEditable(lastEditable)) return lastEditable;
+    return null;
+  }
+
+  function insertAtCursor(el, text){
+    const start = el.selectionStart ?? el.value.length;
+    const end = el.selectionEnd ?? start;
+    const before = el.value.slice(0, start);
+    const after = el.value.slice(end);
+    el.value = before + text + after;
+    const pos = start + text.length;
+    if (typeof el.setSelectionRange === 'function') el.setSelectionRange(pos, pos);
+  }
+
+  function startRec(){
+    recognition = new SR();
+    recognition.lang = voiceLang.value || document.documentElement.lang || 'en-IN';
+    recognition.continuous = true;
+    recognition.interimResults = true;
+
+    recognition.onresult = (e) => {
+      let finalText = '';
+      for (let i = e.resultIndex; i < e.results.length; i++){
+        const r = e.results[i];
+        if (r.isFinal) finalText += r[0].transcript + ' ';
+      }
+      if (!finalText.trim()) return;
+      const target = getTargetField();
+      if (!target) return;
+
+      // Add a space/newline only when appending at line-end
+      const atEnd = target.selectionStart === target.selectionEnd && target.selectionStart === target.value.length;
+      const needsSep = atEnd && target.value && !/\s$/.test(target.value);
+      const sep = target.tagName === 'TEXTAREA' ? '\n' : ' ';
+      const textToInsert = (needsSep ? sep : '') + finalText.trim();
+
+      insertAtCursor(target, textToInsert);
+      // Trigger existing join updates (appfull→appjoin, depofull→depojoin, boundary→boundaryjoin)
+      target.dispatchEvent(new Event('input', { bubbles: true }));
+    };
+
+    recognition.onend = () => {
+      listening = false;
+      voiceToggle.textContent = 'Start Voice';
+      voiceToggle.classList.remove('active');
+    };
+    recognition.onerror = () => {
+      listening = false;
+      voiceToggle.textContent = 'Start Voice';
+      voiceToggle.classList.remove('active');
+    };
+
+    recognition.start(); // must be user-initiated click
+    listening = true;
+    voiceToggle.textContent = 'Stop Voice';
+    voiceToggle.classList.add('active');
+  }
+
+  function stopRec(){
+    if (recognition) recognition.stop();
+  }
+
+  voiceToggle.addEventListener('click', () => {
+    if (listening) stopRec(); else startRec();
+  });
+
+  // Apply new language on change (restart if listening)
+  voiceLang.addEventListener('change', () => {
+    if (listening) { stopRec(); setTimeout(startRec, 100); }
+  });
+})();
+
 
             // Rest of the app init
             const courtOptions = ["तहसील-सिंगरौली नगर", "वृत्‍त-पंजरेह, तहसील-सिंगरौली नगर", "वृत्‍त-कचनी, तहसील-सिंगरौली नगर"];
@@ -644,4 +776,3 @@
     </script>
 </body>
 </html>
-
