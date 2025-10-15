@@ -281,8 +281,8 @@
             <button onclick="login()">Login</button>
         </div>
         <div class="login-footer">
-            Support 9876543210<br>
-            © 2025 Rock Technology All rights reserved. Version 1.0
+            Support: 7869731689<br>
+            © 2025 Rock Technology - All rights reserved. Version 1.0
         </div>
     </div>
 
@@ -328,6 +328,10 @@
                         <textarea id="appfull"></textarea>
                     </div>
                     <div>
+                        <label for="appaddr">Applicant Address</label>
+                        <textarea id="appaddr">निवासी-, जिला-सिंगरौली (म.प्र.)</textarea>
+                    </div>
+                    <div>
                         <label for="appjoin">Applicant Join (full)</label>
                         <input type="text" id="appjoin" readonly>
                     </div>
@@ -346,6 +350,10 @@
                     <div>
                         <label for="depofull">Deponent Name (full)</label>
                         <textarea id="depofull"></textarea>
+                    </div>
+                    <div>
+                        <label for="depoaddr">Deponent Address</label>
+                        <textarea id="depoaddr">निवासी-, जिला-सिंगरौली (म.प्र.)</textarea>
                     </div>
                     <div>
                         <label for="depojoin">Deponent Join (full)</label>
@@ -367,6 +375,15 @@
                         <label for="lowner">Land Owner Details</label>
                         <textarea id="lowner"></textarea>
                     </div>
+                    <!-- Shifted here -->
+                    <div>
+                        <label for="boundary">Boundary (if available)</label>
+                        <textarea id="boundary"></textarea>
+                    </div>
+                    <div>
+                        <label for="boundaryjoin">Boundary Join</label>
+                        <input type="text" id="boundaryjoin" readonly>
+                    </div>
                 </div>
                 <div class="row" id="row5">
                     <div>
@@ -377,13 +394,14 @@
                         <label for="dlowner">Deceased Owner (if available)</label>
                         <textarea id="dlowner"></textarea>
                     </div>
+                    <!-- Replaced Boundary with Legal heirs -->
                     <div>
-                        <label for="boundary">Boundary (if available)</label>
-                        <textarea id="boundary"></textarea>
+                        <label for="lheirs">Legal heirs (full)</label>
+                        <textarea id="lheirs"></textarea>
                     </div>
                     <div>
-                        <label for="boundaryjoin">Boundary Join</label>
-                        <input type="text" id="boundaryjoin" readonly>
+                        <label for="lheirsjoin">Legal heirs Join</label>
+                        <input type="text" id="lheirsjoin" readonly>
                     </div>
                 </div>
                 <div class="row" id="row6">
@@ -410,10 +428,12 @@
                     <li><code>{APPTYPE}</code> Applicant Type</li>
                     <li><code>{APPSHORT}</code> Applicant Name (short)</li>
                     <li><code>{APPFULL}</code> Applicant Name (full)</li>
+                    <li><code>{APPADDR}</code> Applicant Address</li>
                     <li><code>{APPJOIN}</code> Applicant Join</li>
                     <li><code>{DEPOTYPE}</code> Deponent Type</li>
                     <li><code>{DEPOSHORT}</code> Deponent Name (short)</li>
                     <li><code>{DEPOFULL}</code> Deponent Name (full)</li>
+                    <li><code>{DEPOADDR}</code> Deponent Address</li>
                     <li><code>{DEPOJOIN}</code> Deponent Join</li>
                     <li><code>{VILL}</code> Village</li>
                     <li><code>{KHASARA}</code> Khasara & Rakava Details</li>
@@ -422,6 +442,8 @@
                     <li><code>{DL_OWNER}</code> Deceased Owner (if available)</li>
                     <li><code>{BOUNDARY}</code> Boundary (if available)</li>
                     <li><code>{BOUNDARYJOIN}</code> Boundary Join</li>
+                    <li><code>{LHEIRS}</code> Legal heirs (full)</li>
+                    <li><code>{LHEIRSJOIN}</code> Legal heirs Join</li>
                 </ul>
             </div>
         </div>
@@ -530,8 +552,15 @@
                 const appfullValue = document.getElementById('appfull').value;
                 const depofullValue = document.getElementById('depofull').value;
                 const boundaryValue = document.getElementById('boundary').value;
+                const lheirsValue = document.getElementById('lheirs').value;
                 const docdtValue = document.getElementById('docdt').value;
                 const dodateValue = document.getElementById('dodate').value;
+
+                // Prepare lines for multiline fields (filter empty)
+                const appfullLines = appfullValue ? appfullValue.split('\n').map(l => l.trim()).filter(l => l) : [];
+                const depofullLines = depofullValue ? depofullValue.split('\n').map(l => l.trim()).filter(l => l) : [];
+                const boundaryLines = boundaryValue ? boundaryValue.split('\n').map(l => l.trim()).filter(l => l) : [];
+                const lheirsLines = lheirsValue ? lheirsValue.split('\n').map(l => l.trim()).filter(l => l) : [];
 
                 const context = {
                     DOCID: document.getElementById('docid').value || '',
@@ -539,19 +568,23 @@
                     COURT: document.getElementById('court').value || '',
                     APPTYPE: document.getElementById('apptype').value || '',
                     APPSHORT: document.getElementById('appshort').value || '',
-                    APPFULL: appfullValue || '',
-                    APPJOIN: appfullValue.split('\n').map(l => l.trim()).filter(l => l).join(', '),
+                    APPFULL: appfullLines.join('\n'), // Line breaks within paragraph
+                    APPJOIN: appfullLines.join(', '), // Comma-separated join
+                    APPADDR: document.getElementById('appaddr').value || '',
                     DEPOTYPE: document.getElementById('depotype').value || '',
                     DEPOSHORT: document.getElementById('deposhort').value || '',
-                    DEPOFULL: depofullValue || '',
-                    DEPOJOIN: depofullValue.split('\n').map(l => l.trim()).filter(l => l).join(', '),
+                    DEPOFULL: depofullLines.join('\n'), // Line breaks within paragraph
+                    DEPOJOIN: depofullLines.join(', '), // Comma-separated join
+                    DEPOADDR: document.getElementById('depoaddr').value || '',
                     VILL: document.getElementById('vill').value || '',
                     KHASARA: document.getElementById('khasara').value || '',
                     L_OWNER: document.getElementById('lowner').value || '',
                     DO_DATE: formatDateToDDMMYYYY(dodateValue) || '',
                     DL_OWNER: document.getElementById('dlowner').value || '',
-                    BOUNDARY: boundaryValue || '',
-                    BOUNDARYJOIN: boundaryValue.split('\n').map(l => l.trim()).filter(l => l).join(', ')
+                    BOUNDARY: boundaryLines.join('\n'), // Line breaks within paragraph
+                    BOUNDARYJOIN: boundaryLines.join(', '), // Comma-separated join
+                    LHEIRS: lheirsLines.join('\n'), // Line breaks within paragraph
+                    LHEIRSJOIN: lheirsLines.join(', ') // Comma-separated join
                 };
 
                 const templateName = document.getElementById('template').value;
@@ -599,6 +632,7 @@
             updateJoinField('appfull', 'appjoin');
             updateJoinField('depofull', 'depojoin');
             updateJoinField('boundary', 'boundaryjoin');
+            updateJoinField('lheirs', 'lheirsjoin');
 
             document.getElementById('downloadBtn').addEventListener('click', generateAndDownload);
 
